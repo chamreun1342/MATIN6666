@@ -1,67 +1,74 @@
-<!DOCTYPE html><html lang="km">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>សារភាពស្នេហ៍</title>
-<style>
-body {
-  font-family: 'Arial', sans-serif;
-  text-align: center;
-  background: linear-gradient(135deg,#ff9a9e,#fad0c4);
-  height: 100vh;
-  overflow: hidden;
-  margin: 0;
-  position: relative;
-}h1 { margin-top: 120px; font-size: 42px; color: white; text-shadow: 2px 2px 5px rgba(0,0,0,0.3); position: relative; }
-
-button { padding: 15px 35px; font-size: 20px; border: none; border-radius: 12px; cursor: pointer; position: absolute; }
-
-#yes { background: #28a745; color: white; top: 50%; left: 45%; transform: translate(-50%, -50%); }
-
-#no { background: #dc3545; color: white; top: 50%; left: 55%; transform: translate(-50%, -50%); }
-
-#byline { color: black; font-size: 20px; position: absolute; top: 60%; left: 50%; transform: translateX(-50%); font-weight: bold; white-space: nowrap; } </style>
-
+    <style>
+        .container { display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        #canvas { border: 5px solid #333; border-radius: 50%; margin: 20px; }
+        .controls { margin-bottom: 20px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background: #ff4757; color: white; border: none; border-radius: 5px; }
+        textarea { width: 300px; height: 100px; margin-bottom: 10px; }
+    </style>
 </head>
-<body><h1 id="question">អូនព្រមធ្វើជាសង្សារបងអត់❤️</h1><button id="yes">Yes</button> <button id="no">No</button>
+<body>
 
-<div id="byline">BY: Matin❤️</div><script>
-const yesBtn = document.getElementById('yes');
-const noBtn = document.getElementById('no');
+<div class="container">
+    <h2>MATIN</h2>
+    <h2>កងវិលរើសអ្នកឈ្នះ</h2>
+    <textarea id="names" placeholder="បញ្ចូលឈ្មោះ (ម្នាក់មួយបន្ទាត់)">អ្នកទី១&#10;អ្នកទី២&#10;អ្នកទី៣&#10;អ្នកទី៤</textarea>
+    <div class="controls">
+        <button onclick="spin()">វិលកង!</button>
+    </div>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <h1 id="winner"></h1>
+</div>
 
-// Yes button click -> go to YouTube
-yesBtn.addEventListener('click', ()=>{
-    window.location.href = "https://youtu.be/-__W6u7gjGg?si=H0YUGIbrVcTu2aHm";
-});
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let currentRotation = 0;
 
-// No button click -> moves randomly in screen, keeping ~3cm gap from Yes
-noBtn.addEventListener('click', ()=>{
-    const maxX = window.innerWidth - noBtn.offsetWidth;
-    const maxY = window.innerHeight - noBtn.offsetHeight;
+    function drawWheel(names) {
+        const numSegments = names.length;
+        const angleStep = (2 * Math.PI) / numSegments;
+        const colors = ['#f1c40f', '#e67e22', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71'];
 
-    const yesRect = yesBtn.getBoundingClientRect();
-    const minGap = 30; // approx 3cm
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        names.forEach((name, i) => {
+            ctx.beginPath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.moveTo(200, 200);
+            ctx.arc(200, 200, 200, i * angleStep, (i + 1) * angleStep);
+            ctx.fill();
+            
+            // ដាក់អក្សរឈ្មោះ
+            ctx.save();
+            ctx.translate(200, 200);
+            ctx.rotate(i * angleStep + angleStep / 2);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 16px Arial";
+            ctx.fillText(name, 70, 5);
+            ctx.restore();
+        });
+    }
 
-    let newX, newY;
-    do {
-        newX = Math.random() * maxX;
-        newY = Math.random() * maxY;
-    } while(Math.abs(newX - yesRect.left) < minGap || Math.abs(newY - yesRect.top) < minGap);
+    function spin() {
+        const names = document.getElementById('names').value.split('\n').filter(n => n.trim() !== "");
+        if (names.length < 2) return alert("សូមបញ្ចូលយ៉ាងតិច ២ ឈ្មោះ");
 
-    noBtn.style.left = newX + 'px';
-    noBtn.style.top = newY + 'px';
-});
+        const extraRotation = Math.random() * 360 + 1440; // វិលយ៉ាងតិច ៤ ជុំ
+        currentRotation += extraRotation;
+        
+        canvas.style.transition = "transform 3s cubic-bezier(0.17, 0.67, 0.83, 0.67)";
+        canvas.style.transform = `rotate(${currentRotation}deg)`;
 
-// Keep buttons and BY: Matin centered
-function positionButtons(){
-    const rect = document.getElementById('question').getBoundingClientRect();
-    yesBtn.style.top = rect.bottom + 50 + 'px';
-    noBtn.style.top = rect.bottom + 50 + 'px';
-    yesBtn.style.left = '45%';
-    noBtn.style.left = '55%';
-    document.getElementById('byline').style.top = rect.bottom + 100 + 'px';
-}
-window.addEventListener('resize', positionButtons);
-positionButtons();
-</script></body>
-</html>
+        // បង្ហាញលទ្ធផលក្រោយវិលចប់
+        setTimeout(() => {
+            const actualDegree = currentRotation % 360;
+            const index = names.length - 1 - Math.floor((actualDegree / 360) * names.length);
+            document.getElementById('winner').innerText = "អ្នកឈ្នះគឺ៖ " + names[index];
+        }, 3000);
+        drawWheel(names);
+    }
+
+    // គូរលើកដំបូង
+    drawWheel(document.getElementById('names').value.split('\n'));
+</script>
